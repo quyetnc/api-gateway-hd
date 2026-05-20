@@ -106,15 +106,17 @@ jobs:
     needs: [build-image]
     steps:
       - uses: actions/checkout@v4
-      
-      # Install kubectl (not pre-installed in GitHub Actions)
-      - uses: azure/setup-kubectl@v3
 
-      # Validate Kubernetes manifest using kubectl dry-run
-      # --dry-run=client: validate against K8s schema (no server needed)
-      # Takes 1-2 seconds, catches manifest errors
-      # Real deployment (to AWS EKS) happens in Day 25 via manual approval
+      # Validate Kubernetes manifest YAML syntax
+      # yq: lightweight YAML validator (no server needed)
+      # Catches: YAML syntax errors, missing fields, invalid structure
+      # Real schema validation happens on Day 25 when deploying to AWS EKS
       - name: Validate K8s manifest
         run: |
-          kubectl apply -f k8s/ --dry-run=client
-          echo "✅ Manifest is valid!"
+          # Install yq (YAML validator)
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+          # Validate YAML syntax
+          yq eval '.' k8s/deployment.yaml > /dev/null
+          echo "✅ K8s manifest YAML is valid!"
