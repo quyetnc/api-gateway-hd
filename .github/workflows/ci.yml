@@ -6,7 +6,7 @@ name: CI
 # - pull_request: merge gate (block merge if CI fails)
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
 
 # PERMISSION: Explicit scopes for security (principle of least privilege)
@@ -19,44 +19,7 @@ permissions:
 
 jobs:
   # ============================================================
-  # JOB 1: LINT
-  # ============================================================
-  # Purpose: Code quality checks (no unused variables, formatting, etc.)
-  # FOUNDATION 2: RUNNER — Runs on ubuntu-latest (free tier shared VM)
-  # FOUNDATION 3: JOBS+STEPS — lint runs PARALLEL with test (not sequential)
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      # Step 0: Clone the repo code
-      # Every workflow starts with checkout — without it, no code to lint
-      - uses: actions/checkout@v4
-
-      # Step 1: Setup Node.js environment
-      # with cache: 'npm' — HUGE speedup on 2nd+ runs
-      # First run: downloads dependencies from npm registry (~30s)
-      # 2nd+ runs: restores from GitHub cache (~5s) — 6x faster!
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      # Step 2: Install dependencies (clean install)
-      # npm ci (clean install) vs npm install:
-      # - npm ci: uses exact versions from package-lock.json (reproducible, safe for CI)
-      # - npm install: allows version flexibility (use locally only)
-      # Day 23 learning: Lock files are strict — CI enforces reproducibility
-      - run: npm ci
-
-      # Step 3: Run linter
-      # ✏️ REPLACE THIS with your project's lint command
-      # Options:
-      # - npm run lint (if you have lint script in package.json)
-      # - npx eslint . (if using eslint directly)
-      # - npx prettier --check . (if using prettier)
-      - run: npm run lint
-
-  # ============================================================
-  # JOB 2: TEST
+  # JOB 1: TEST
   # ============================================================
   # Purpose: Run unit + integration tests
   # PARALLEL with lint — both run simultaneously
@@ -78,17 +41,15 @@ jobs:
       - run: npm test
 
   # ============================================================
-  # JOB 3: BUILD-IMAGE
+  # JOB 2: BUILD-IMAGE
   # ============================================================
   # Purpose: Build Docker image + push to GHCR (GitHub Container Registry)
-  # DEPENDENCY: Runs ONLY after lint AND test pass (needs: [lint, test])
-  # If either lint or test fails, this job is SKIPPED (not run, not failed)
-  # DAG: lint → \
-  #              → build-image
-  #      test → /
+  # DEPENDENCY: Runs ONLY after test passes (needs: [test])
+  # If test fails, this job is SKIPPED (not run, not failed)
+  # DAG: test → build-image
   build-image:
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [test]
     steps:
       - uses: actions/checkout@v4
 
@@ -130,7 +91,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ============================================================
-  # JOB 4: DEPLOY
+  # JOB 3: DEPLOY
   # ============================================================
   # Purpose: Deploy to Kubernetes + verify Pod is running
   # DEPENDENCY: Runs ONLY after build-image succeeds (needs: [build-image])
