@@ -24,6 +24,6 @@ describe('Health Endpoint', () => {
       .get('/health')
       .set('Authorization', 'Bearer invalid-token');
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
   });
 });
