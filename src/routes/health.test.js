@@ -18,12 +18,12 @@ describe('Health Endpoint', () => {
       status: 'ok',
     });
   });
-
+  //successfully access health endpoint without authentication
   it('should not require authentication', async () => {
     const response = await request(app)
       .get('/health')
       .set('Authorization', 'Bearer invalid-token');
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(200);
   });
 });
