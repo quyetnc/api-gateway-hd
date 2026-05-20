@@ -18,7 +18,7 @@ describe('Health Endpoint', () => {
       status: 'ok',
     });
   });
-
+  //successfully access health endpoint without authentication
   it('should not require authentication', async () => {
     const response = await request(app)
       .get('/health')
