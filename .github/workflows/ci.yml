@@ -6,7 +6,7 @@ name: CI
 # - pull_request: merge gate (block merge if CI fails)
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 
 # PERMISSION: Explicit scopes for security (principle of least privilege)
